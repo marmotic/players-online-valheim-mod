@@ -1,6 +1,8 @@
 # Connected players list
 
 Mod for Valheim to show currently connected players and the distance to them.
+Can be shown/hidden with F7 (default).
+Config can be changed in <Steam Location>\steamapps\common\Valheim\BepInEx\config\marmotic.playersonline
 
 ![alt](players-online.jpg)
 
@@ -11,6 +13,7 @@ References you'll need to put into `Libs/`:
 - UnityEngine.dll (this and below can be found in `valheim_Data/Managed`)
 - UnityEngine.CoreModule.dll
 - UnityEngine.IMGUIModule.dll
+- UnityEngine.InputLegacyModule.dll
 - UnityEngine.TextRenderingModule.dll
 - UnityEngine.UI.dll
 
