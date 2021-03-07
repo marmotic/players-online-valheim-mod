@@ -12,11 +12,16 @@ namespace PlayersOnlineValheim
     [BepInPlugin("marmotic.playersonline", "Players Online", "0.1.0.0")]
     public class PlayersOnlinePlugin : BaseUnityPlugin
     {
+        private static readonly bool isDebug = true;
+
         private static PlayersOnlinePlugin context;
         public static ConfigEntry<bool> modEnabled;
+        public static ConfigEntry<bool> showList;
         public static ConfigEntry<string> playerListLocationString;
         public static ConfigEntry<float> playerListNameWidth;
         public static ConfigEntry<float> playerListDistanceWidth;
+
+        public static ConfigEntry<string> toggleListKey;
 
         public static ConfigEntry<Color> nameFontColor;
         public static ConfigEntry<Color> distanceFontColor;
@@ -32,9 +37,12 @@ namespace PlayersOnlineValheim
         {
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
+            showList = Config.Bind<bool>("General", "ShowList", true, "Show the list");
             playerListLocationString = Config.Bind<string>("General", "PlayerListLocationString", "85%,30%", "Location on the screen to show the list (x,y) or (x%,y%)");
             playerListNameWidth = Config.Bind<float>("General", "PlayerListNameWidth", 150, "Width of the player name part of list");
             playerListDistanceWidth = Config.Bind<float>("General", "PlayerListDistanceWidth", 120, "Width of the player distance part of list");
+
+            toggleListKey = Config.Bind<string>("General", "ShowListKey", "f7", "Key used to toggle the list display. Use https://docs.unity3d.com/Manual/ConventionalGameInput.html");
 
             fontName = Config.Bind<string>("General", "FontName", "AveriaSerifLibre-Bold", "Name of font");
             fontSize = Config.Bind<int>("General", "FontSize", 24, "Size of font");
@@ -49,28 +57,58 @@ namespace PlayersOnlineValheim
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
         }
 
+        private void Update()
+        {
+            if (!modEnabled.Value || !PressedToggleKey())
+                return;
+
+            bool show = showList.Value;
+            showList.Value = !show;
+            Config.Save();
+        }
+
         private void OnGUI()
         {
-            if (modEnabled.Value && Player.m_localPlayer && EnvMan.instance)
+            if (modEnabled.Value && showList.Value && Player.m_localPlayer && EnvMan.instance)
             {
                 float alpha = 1f;
-                //string playerListString = GetPlayerListString();
 
-                Vector2 nameLabelPosition = new Vector2(playerListPosition.x, playerListPosition.y);
-                style.normal.textColor = new Color(nameFontColor.Value.r, nameFontColor.Value.g, nameFontColor.Value.b, nameFontColor.Value.a * alpha);
-                GUI.Label(new Rect(nameLabelPosition, new Vector2(playerListNameWidth.Value, fontSize.Value)), "NAMETHATIS15CHA", style);
+                List<ZNet.PlayerInfo> ___m_tempPlayerInfo = new List<ZNet.PlayerInfo>();
 
-                Vector2 distanceLabelPosition = new Vector2(playerListPosition.x + playerListNameWidth.Value, playerListPosition.y);
-                style.normal.textColor = new Color(distanceFontColor.Value.r, distanceFontColor.Value.g, distanceFontColor.Value.b, distanceFontColor.Value.a * alpha);
-                GUI.Label(new Rect(distanceLabelPosition, new Vector2(playerListDistanceWidth.Value, fontSize.Value)), "12345.6m", style);
+                if (!isDebug)
+                {
+                    HookZNet.GetOtherPublicPlayers(ZNet.instance, ___m_tempPlayerInfo);
+                } else
+                {
+                    for (int j = 0; j < 10; j++)
+                    {
+                        ZNet.PlayerInfo player = new ZNet.PlayerInfo();
+                        player.m_name = "PLAYER" + j;
+                        player.m_position = new Vector3(j * 100, j * 200);
+                        ___m_tempPlayerInfo.Add(player);
+                    }
+                }
 
-                Vector2 nameLabelPosition2 = new Vector2(playerListPosition.x, playerListPosition.y + fontSize.Value);
-                style.normal.textColor = new Color(nameFontColor.Value.r, nameFontColor.Value.g, nameFontColor.Value.b, nameFontColor.Value.a * alpha);
-                GUI.Label(new Rect(nameLabelPosition2, new Vector2(playerListNameWidth.Value, fontSize.Value)), "SECONDNAME", style);
+                if (___m_tempPlayerInfo.Count > 0)
+                {
+                    int i = 0;
+                    foreach (ZNet.PlayerInfo m_Player in ___m_tempPlayerInfo)
+                    {
+                        // add name label
+                        Vector2 nameLabelPosition = new Vector2(playerListPosition.x, playerListPosition.y + fontSize.Value * i);
+                        style.normal.textColor = new Color(nameFontColor.Value.r, nameFontColor.Value.g, nameFontColor.Value.b, nameFontColor.Value.a * alpha);
+                        GUI.Label(new Rect(nameLabelPosition, new Vector2(playerListNameWidth.Value, fontSize.Value)), m_Player.m_name, style);
 
-                Vector2 distanceLabelPosition2 = new Vector2(playerListPosition.x + playerListNameWidth.Value, playerListPosition.y + fontSize.Value);
-                style.normal.textColor = new Color(distanceFontColor.Value.r, distanceFontColor.Value.g, distanceFontColor.Value.b, distanceFontColor.Value.a * alpha);
-                GUI.Label(new Rect(distanceLabelPosition2, new Vector2(playerListDistanceWidth.Value, fontSize.Value)), "123.4m", style);
+                        // add distance label
+                        Vector2 distanceLabelPosition = new Vector2(playerListPosition.x + playerListNameWidth.Value, playerListPosition.y + fontSize.Value * i);
+                        style.normal.textColor = new Color(distanceFontColor.Value.r, distanceFontColor.Value.g, distanceFontColor.Value.b, distanceFontColor.Value.a * alpha);
+                        float distance = Vector3.Distance(m_Player.m_position, Player.m_localPlayer.transform.position);
+                        string distanceString = String.Format("{0:0.0}", distance) + "m";
+                        GUI.Label(new Rect(distanceLabelPosition, new Vector2(playerListDistanceWidth.Value, fontSize.Value)), distanceString, style);
+
+                        i++;
+                    }
+                }
             }
         }
 
@@ -135,6 +173,28 @@ namespace PlayersOnlineValheim
                 }
             }
             return playerList;
+        }
+        private static bool CheckKeyHeld(string value)
+        {
+            try
+            {
+                return Input.GetKey(value.ToLower());
+            }
+            catch
+            {
+                return true;
+            }
+        }
+        private bool PressedToggleKey()
+        {
+            try
+            {
+                return Input.GetKeyDown(toggleListKey.Value.ToLower()) && CheckKeyHeld(toggleListKey.Value);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
