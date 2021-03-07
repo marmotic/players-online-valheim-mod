@@ -1,4 +1,5 @@
-Libs/
+Libs/*
+!Libs/.gitkeep
 
 [Dd]ebug/
 [Dd]ebugPublic/
