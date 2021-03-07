@@ -12,6 +12,8 @@ A few things are configurable. Just edit the config in `<Steam Location>\steamap
 
 ![alt](players-online.jpg)
 
+## Building
+
 References you'll need to put into `Libs/`:
 - [BepInEx.dll](https://github.com/BepInEx/BepInEx/releases)
 - 0Harmony.dll (best taken from BepInEx release above, alternatively from the [official release](https://github.com/pardeike/Harmony/releases))
