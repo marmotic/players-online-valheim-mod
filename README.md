@@ -2,9 +2,13 @@
 
 Mod for Valheim to show currently connected players and the distance to them.
 
+## Instructions
+1. Need to install [BepInEx](https://bepinex.github.io/bepinex_docs/master/articles/user_guide/installation/index.html?tabs=tabid-win) first.
+2. Place [the dll](https://github.com/marmotic/players-online-valheim-mod/releases) in `<Steam Location>\steamapps\common\Valheim\BepInEx\plugins\`
+
 Can be shown/hidden with F7 (default).
 
-Config can be changed in <Steam Location>\steamapps\common\Valheim\BepInEx\config\marmotic.playersonline
+A few things are configurable. Just edit the config in `<Steam Location>\steamapps\common\Valheim\BepInEx\config\marmotic.playersonline`
 
 ![alt](players-online.jpg)
 
